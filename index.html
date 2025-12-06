@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kampala International University - eClearance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --kiu-green: #006400;
+            --kiu-light-green: #008000;
+            --kiu-gold: #FFD700;
+        }
+        
+        .navbar-brand { font-weight: bold; }
+        .dashboard-card { transition: transform 0.3s; }
+        .dashboard-card:hover { transform: translateY(-5px); }
+        .status-pending { background-color: #fff3cd; }
+        .status-approved { background-color: #d1e7dd; }
+        .status-rejected { background-color: #f8d7da; }
+        .receipt { border: 2px dashed var(--kiu-green); background: #f8f9fa; }
+        .upload-area { border: 2px dashed #dee2e6; border-radius: 10px; transition: all 0.3s; }
+        .upload-area.dragover { border-color: var(--kiu-green); background-color: #e7f1ff; }
+        .login-container { max-width: 400px; margin: 100px auto; }
+        .registration-container { max-width: 700px; margin: 50px auto; }
+        .hidden { display: none; }
+        
+        /* KIU Branding */
+        .bg-kiu { background-color: var(--kiu-green) !important; }
+        .btn-kiu { background-color: var(--kiu-green); border-color: var(--kiu-green); color: white; }
+        .btn-kiu:hover { background-color: var(--kiu-light-green); border-color: var(--kiu-light-green); }
+        .text-kiu { color: var(--kiu-green) !important; }
+        .border-kiu { border-color: var(--kiu-green) !important; }
+        
+        .university-header {
+            background: linear-gradient(135deg, var(--kiu-green) 0%, var(--kiu-light-green) 100%);
+            color: white;
+            padding: 1rem 0;
+            border-bottom: 3px solid var(--kiu-gold);
+        }
+        
+        .file-preview {
+            max-width: 200px;
+            max-height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .risk-high { background-color: #f8d7da; border-left: 4px solid #dc3545; }
+        .risk-medium { background-color: #fff3cd; border-left: 4px solid #ffc107; }
+        .risk-low { background-color: #d1e7dd; border-left: 4px solid #198754; }
+        
+        .receipt-generated { border: 2px solid var(--kiu-green); background-color: #f0fff0; }
+        .receipt-pending { border: 2px dashed #ccc; background-color: #f8f9fa; }
+        
+        .submission-item {
+            border-left: 4px solid var(--kiu-green);
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+        
+        /* Ensure login page is visible by default */
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        .email-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        /* Custom modal */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .custom-modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- University Header -->
+    <div class="university-header text-center" id="uniHeader" style="display: none;">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                    <div style="width: 80px; height: 80px; background: white; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                        <span style="color: var(--kiu-green); font-weight: bold; font-size: 12px;">KIU</span>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <h3 class="mb-1">KAMPALA INTERNATIONAL UNIVERSITY</h3>
+                    <p class="mb-0" style="font-size: 1.1em; opacity: 0.9;">
+                        <em>"Exploring the Heights"</em>
+                    </p>
+                    <p class="mb-0" style="font-size: 0.9em; opacity: 0.8;">
+                        P.O. Box 20000, Ggaba Road, Kansanga, Kampala, Uganda
+                    </p>
+                </div>
+                <div class="col-md-2 text-center">
+                    <div style="width: 80px; height: 80px; background: var(--kiu-gold); border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-graduation-cap" style="color: var(--kiu-green); font-size: 24px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-kiu" id="mainNav" style="display: none;">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-university me-2"></i>eClearance System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3" id="userInfo"></span>
+                <button class="btn btn-outline-light btn-sm me-2" onclick="logout()">Logout</button>
+                <button class="btn btn-outline-light btn-sm" onclick="toggleRole()" id="roleToggle">Switch to Finance</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Page -->
+    <div class="container" id="loginPage">
+        <div class="login-container">
+            <div class="card shadow">
+                <div class="card-header bg-kiu text-white text-center">
+                    <h4><i class="fas fa-university me-2"></i>KIU eClearance System</h4>
+                    <p class="mb-0">University Tuition Clearance Portal</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div style="width: 60px; height: 60px; background: var(--kiu-green); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-lock text-white"></i>
+                        </div>
+                        <h5>Welcome Back</h5>
+                        <p class="text-muted">Please login to continue</p>
+                    </div>
+                    
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="loginEmail" required 
+                                   placeholder="Enter your university email">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required 
+                                   placeholder="Enter your password">
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                        <button type="submit" class="btn btn-kiu w-100 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </button>
+                    </form>
+
+                    <div class="text-center">
+                        <p class="mb-0">Don't have an account?</p>
+                        <button class="btn btn-link p-0 text-kiu" onclick="showRegistration()">
+                            Register as Student
+                        </button>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            Finance staff: Use credentials provided by admin
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Page -->
+    <div class="container hidden" id="registrationPage">
+        <div class="registration-container">
+            <div class="card shadow">
+                <div class="card-header bg-kiu text-white text-center">
+                    <h4><i class="fas fa-user-plus me-2"></i>Student Registration</h4>
+                    <p class="mb-0">Kampala International University</p>
+                </div>
+                <div class="card-body p-4">
+                    <form id="registrationForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="regName" required 
+                                       placeholder="Enter your full name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Registration Number *</label>
+                                <input type="text" class="form-control" id="regNumber" required 
+                                       placeholder="e.g., 2024-BCS-001">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="regEmail" required 
+                                       placeholder="student.2024@kiu.ac.ug">
+                                <div class="form-text">All notifications will be sent to this email</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password *</label>
+                                <input type="password" class="form-control" id="regPassword" required 
+                                       placeholder="Create a strong password">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">College/School *</label>
+                                <select class="form-select" id="regCollege" required>
+                                    <option value="">Select College</option>
+                                    <option value="COSCIS">College of Computer Science & IT</option>
+                                    <option value="COBAMS">College of Business & Management</option>
+                                    <option value="COE">College of Engineering</option>
+                                    <option value="COS">College of Science</option>
+                                    <option value="COHS">College of Health Sciences</option>
+                                    <option value="COL">College of Law</option>
+                                    <option value="COED">College of Education</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Program *</label>
+                                <input type="text" class="form-control" id="regProgram" required 
+                                       placeholder="e.g., Bachelor of Computer Science">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Academic Year *</label>
+                                <select class="form-select" id="regYear" required>
+                                    <option value="">Select Year</option>
+                                    <option value="1">Year 1</option>
+                                    <option value="2">Year 2</option>
+                                    <option value="3">Year 3</option>
+                                    <option value="4">Year 4</option>
+                                    <option value="5">Year 5</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Semester *</label>
+                                <select class="form-select" id="regSemester" required>
+                                    <option value="">Select Semester</option>
+                                    <option value="1">Semester 1</option>
+                                    <option value="2">Semester 2</option>
+                                    <option value="3">Semester 3</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Academic Session *</label>
+                                <input type="text" class="form-control" id="regSession" required 
+                                       placeholder="e.g., 2023/2024" value="2024/2025">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Total Fees (UGX) *</label>
+                                <input type="number" class="form-control" id="regTotalFees" required 
+                                       placeholder="Amount in Uganda Shillings" min="0" value="2500000">
+                                <div class="form-text">As specified in your fee structure</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Initial Amount Paid (UGX) *</label>
+                                <input type="number" class="form-control" id="regAmountPaid" required 
+                                       placeholder="Amount already paid" min="0" value="500000">
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">
+                                I agree to receive email notifications from KIU eClearance System
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-kiu">
+                                <i class="fas fa-user-plus me-2"></i>Create Account
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="showLogin()">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Login
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="container mt-4 hidden" id="app">
+        <!-- Student Dashboard -->
+        <div id="studentView">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card dashboard-card border-kiu">
+                        <div class="card-body">
+                            <h5 class="card-title text-kiu"><i class="fas fa-wallet me-2"></i> Financial Summary</h5>
+                            <p class="card-text">Total Fees: <strong id="totalFeesDisplay">UGX 0</strong></p>
+                            <p class="card-text">Amount Paid: <strong id="amountPaid">UGX 0</strong></p>
+                            <p class="card-text">Remaining Balance: <strong id="remainingBalance">UGX 0</strong></p>
+                            <p class="card-text">Finance Verified: <span class="badge bg-secondary" id="financeVerified">No</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card dashboard-card border-kiu">
+                        <div class="card-body">
+                            <h5 class="card-title text-kiu"><i class="fas fa-receipt me-2"></i> Clearance Status</h5>
+                            <p class="card-text">Status: <span class="badge bg-warning" id="clearanceStatus">Not Started</span></p>
+                            <p class="card-text">Last Submission: <span id="lastSubmission">-</span></p>
+                            <p class="card-text">Student: <span id="studentInfo">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Submission -->
+            <div class="card mb-4 border-kiu">
+                <div class="card-header bg-kiu text-white">
+                    <h5><i class="fas fa-upload me-2"></i>Submit Payment Evidence</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Upload clear images of your bank slip or payment confirmation. Finance will verify your payment.
+                        <br><strong>Accepted formats:</strong> JPG, PNG, PDF (Max: 5MB)
+                        <br><strong>Notification:</strong> You will receive email updates about your submission status.
+                    </div>
+                    
+                    <div class="upload-area p-5 text-center" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <p>Drag & drop your bank slip or payment evidence here</p>
+                        <p class="text-muted small">Clear, readable images of bank slips or mobile money receipts</p>
+                        <input type="file" id="fileInput" class="d-none" accept=".jpg,.jpeg,.png,.pdf">
+                        <button class="btn btn-kiu" onclick="document.getElementById('fileInput').click()">
+                            Choose File
+                        </button>
+                    </div>
+                    <div class="mt-3" id="fileInfo"></div>
+                    <div id="filePreview" class="text-center mt-3"></div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Additional Payment Amount (UGX)</label>
+                        <input type="number" class="form-control" id="additionalAmount" 
+                               placeholder="Enter amount paid in this transaction" min="0">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Payment Reference/Description (Optional)</label>
+                        <input type="text" class="form-control" id="paymentDescription" 
+                               placeholder="e.g., Bank Transfer, Mobile Money, etc.">
+                    </div>
+                    
+                    <button class="btn btn-kiu mt-3 w-100" id="submitBtn" disabled onclick="submitPayment()">
+                        <i class="fas fa-paper-plane me-2"></i>Submit for Clearance
+                    </button>
+                </div>
+            </div>
+
+            <!-- My Submissions -->
+            <div class="card mb-4 border-kiu">
+                <div class="card-header bg-kiu text-white">
+                    <h5><i class="fas fa-history me-2"></i>My Payment Submissions</h5>
+                </div>
+                <div class="card-body">
+                    <div id="studentSubmissions">
+                        <p class="text-muted">No submissions yet. Submit your first payment evidence above.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Receipt Section -->
+            <div class="card receipt border-kiu" id="receiptSection">
+                <div class="card-header bg-kiu text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Clearance Receipt</h5>
+                    <div id="receiptStatus">
+                        <span class="badge bg-warning" id="receiptStatusBadge">Not Available</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="receiptNotAvailable" class="text-center p-4">
+                        <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Receipt Available Yet</h5>
+                        <p class="text-muted">Your receipt will appear here after finance generates it for you.</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> Finance will generate your receipt once your payment is fully verified and cleared. You will receive an email notification.
+                        </div>
+                    </div>
+
+                    <div id="receiptContent" style="display: none;">
+                        <div class="text-center mb-4">
+                            <h4 class="text-kiu">KAMPALA INTERNATIONAL UNIVERSITY</h4>
+                            <p class="mb-0 text-muted">Official Tuition Receipt</p>
+                            <small class="text-muted">Ggaba Road, Kansanga, Kampala</small>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Receipt No:</strong> <span id="receiptNumber">-</span></p>
+                                <p><strong>Student ID:</strong> <span id="receiptRegNumber">-</span></p>
+                                <p><strong>Student Name:</strong> <span id="receiptName">-</span></p>
+                                <p><strong>College:</strong> <span id="receiptCollege">-</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Date Issued:</strong> <span id="issueDate">-</span></p>
+                                <p><strong>Program:</strong> <span id="receiptProgram">-</span></p>
+                                <p><strong>Academic Year:</strong> <span id="receiptYear">-</span></p>
+                                <p><strong>Session:</strong> <span id="receiptSession">-</span></p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Total Fees:</strong> <span id="receiptTotalFees">UGX 0</span></p>
+                                <p><strong>Amount Paid:</strong> <span id="receiptAmountPaid">UGX 0</span></p>
+                                <p><strong>Remaining Balance:</strong> <span id="receiptBalance">UGX 0</span></p>
+                            </div>
+                            <div class="col-md-6 text-center">
+                                <div id="qrCode" class="mb-2"></div>
+                                <small class="text-muted">Scan to verify authenticity</small>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button class="btn btn-kiu me-2" onclick="downloadReceipt()">
+                                <i class="fas fa-download me-2"></i>Download Receipt
+                            </button>
+                            <button class="btn btn-outline-kiu" onclick="sendReceiptEmail()">
+                                <i class="fas fa-envelope me-2"></i>Email Receipt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Finance Dashboard -->
+        <div id="financeView" style="display: none;">
+            <div class="card border-kiu">
+                <div class="card-header bg-kiu text-white">
+                    <h5><i class="fas fa-tachometer-alt me-2"></i>Finance Dashboard</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Revenue Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-white bg-primary">
+                                <div class="card-body text-center">
+                                    <h4 id="pendingCount">0</h4>
+                                    <p class="mb-0">Pending Requests</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-success">
+                                <div class="card-body text-center">
+                                    <h4 id="approvedCount">0</h4>
+                                    <p class="mb-0">Approved Today</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-warning">
+                                <div class="card-body text-center">
+                                    <h4 id="totalStudents">0</h4>
+                                    <p class="mb-0">Total Students</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-info">
+                                <div class="card-body text-center">
+                                    <h4 id="revenue">UGX 0</h4>
+                                    <p class="mb-0">Total Revenue</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Student Submissions Overview -->
+                    <div class="card mb-4 border-kiu">
+                        <div class="card-header">
+                            <h6 class="text-kiu"><i class="fas fa-inbox me-2"></i>Recent Student Submissions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Student ID</th>
+                                            <th>Student Name</th>
+                                            <th>College</th>
+                                            <th>Amount</th>
+                                            <th>Description</th>
+                                            <th>File</th>
+                                            <th>Submission Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentSubmissionsTable">
+                                        <!-- Student submissions will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Details -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="text-kiu"><i class="fas fa-chart-line me-2"></i>Revenue Breakdown</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Total Amount Collected:</strong> <span class="text-success" id="totalAmountCollected">UGX 0</span></p>
+                                    <p><strong>Total Amount Owed:</strong> <span class="text-danger" id="totalAmountOwed">UGX 0</span></p>
+                                    <p><strong>Collection Rate:</strong> <span id="collectionRate">0%</span></p>
+                                    <p><strong>Average Payment per Student:</strong> <span id="avgPaymentPerStudent">UGX 0</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="text-kiu"><i class="fas fa-file-invoice me-2"></i>Receipt Management</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Total Receipts Generated:</strong> <span id="totalReceipts">0</span></p>
+                                    <p><strong>Receipts Today:</strong> <span id="receiptsToday">0</span></p>
+                                    <p><strong>Pending Receipt Generation:</strong> <span id="pendingReceipts">0</span></p>
+                                    <button class="btn btn-kiu btn-sm" onclick="generateAllReceipts()">
+                                        <i class="fas fa-receipt me-1"></i>Generate All Receipts
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Students Payment Summary -->
+                    <div class="card mb-4 border-kiu">
+                        <div class="card-header">
+                            <h6 class="text-kiu"><i class="fas fa-users me-2"></i>Students Payment Summary</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Student ID</th>
+                                            <th>Student Name</th>
+                                            <th>College</th>
+                                            <th>Total Paid</th>
+                                            <th>Total Fees</th>
+                                            <th>Balance</th>
+                                            <th>Receipt</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentsSummaryTable">
+                                        <!-- Students summary will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Risk Assessment -->
+                    <div class="card mb-4 border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>File Risk Assessment</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>File Type</th>
+                                            <th>Risk Level</th>
+                                            <th>Issues Detected</th>
+                                            <th>Submission Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="riskAssessmentTable">
+                                        <!-- Risk assessment will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fee Verification Section -->
+                    <div class="card mb-4 border-kiu">
+                        <div class="card-header">
+                            <h6 class="text-kiu"><i class="fas fa-check-circle me-2"></i>Fee Verification Required</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Student ID</th>
+                                            <th>Student Name</th>
+                                            <th>Declared Fees</th>
+                                            <th>College</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="feeVerificationTable">
+                                        <!-- Fee verification requests will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Payment Requests -->
+                    <div class="card mb-4 border-kiu">
+                        <div class="card-header">
+                            <h6 class="text-kiu"><i class="fas fa-clock me-2"></i>Pending Payment Verification</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Student ID</th>
+                                            <th>Student Name</th>
+                                            <th>Amount Paid</th>
+                                            <th>Total Fees</th>
+                                            <th>Submission Date</th>
+                                            <th>Evidence</th>
+                                            <th>Risk</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pendingRequests">
+                                        <!-- Requests will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Email Preview Modal -->
+    <div class="custom-modal" id="emailPreviewModal">
+        <div class="custom-modal-content">
+            <div class="card">
+                <div class="card-header bg-kiu text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Email Preview</h5>
+                    <button type="button" class="btn-close btn-close-white" onclick="closeEmailModal()"></button>
+                </div>
+                <div class="card-body">
+                    <div class="email-preview" id="emailPreviewContent">
+                        <!-- Email content will be inserted here -->
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEmailModal()">Close</button>
+                    <button type="button" class="btn btn-kiu" onclick="sendActualEmail()">Send Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let users = JSON.parse(localStorage.getItem('eClearanceUsers')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+        let studentData = JSON.parse(localStorage.getItem('studentData')) || {};
+        let financeData = JSON.parse(localStorage.getItem('financeData')) || {
+            pendingRequests: [],
+            approvedRequests: [],
+            feeVerificationRequests: [],
+            totalRevenue: 0,
+            totalAmountCollected: 0,
+            totalAmountOwed: 0,
+            students: [],
+            fileAssessments: [],
+            receiptsGenerated: [],
+            studentSubmissions: []
+        };
+
+        // Email configuration
+        const EMAIL_CONFIG = {
+            universityName: "Kampala International University",
+            universityEmail: "finance@kiu.ac.ug",
+            supportEmail: "support@kiu.ac.ug",
+            website: "https://www.kiu.ac.ug",
+            phone: "+256-414-267-671"
+        };
+
+        // Track current email being previewed
+        let currentEmailData = null;
+
+        // Pre-populate with sample finance user and some students
+        if (users.length === 0) {
+            users.push({
+                email: 'finance@kiu.ac.ug',
+                password: 'finance123',
+                role: 'finance',
+                name: 'Finance Officer'
+            });
+            
+            // Sample students for demonstration
+            const sampleStudents = [
+                {
+                    name: 'John Mugisha',
+                    regNumber: '2024-BCS-001',
+                    email: 'john.mugisha@kiu.ac.ug',
+                    password: 'password123',
+                    college: 'COSCIS',
+                    program: 'Bachelor of Computer Science',
+                    year: '2',
+                    semester: '1',
+                    session: '2024/2025',
+                    totalFees: 2500000,
+                    amountPaid: 1500000,
+                    role: 'student',
+                    financeVerified: true,
+                    clearanceStatus: 'Approved',
+                    receiptGenerated: true,
+                    receiptNumber: 'KIU-RCP-001',
+                    receiptDate: new Date().toLocaleDateString(),
+                    submissions: [
+                        {
+                            id: 'SUB001',
+                            date: new Date().toLocaleString(),
+                            amount: 1000000,
+                            description: 'Bank Transfer - Semester 1',
+                            status: 'Approved',
+                            file: 'bank_slip.jpg'
+                        }
+                    ]
+                },
+                {
+                    name: 'Sarah Nalwoga',
+                    regNumber: '2024-BBA-002',
+                    email: 'sarah.nalwoga@kiu.ac.ug',
+                    password: 'password123',
+                    college: 'COBAMS',
+                    program: 'Bachelor of Business Administration',
+                    year: '3',
+                    semester: '2',
+                    session: '2024/2025',
+                    totalFees: 2200000,
+                    amountPaid: 1200000,
+                    role: 'student',
+                    financeVerified: true,
+                    clearanceStatus: 'Pending Review',
+                    receiptGenerated: false,
+                    submissions: [
+                        {
+                            id: 'SUB002',
+                            date: new Date().toLocaleString(),
+                            amount: 700000,
+                            description: 'Mobile Money Payment',
+                            status: 'Pending',
+                            file: 'payment_screenshot.png'
+                        }
+                    ]
+                }
+            ];
+            
+            users.push(...sampleStudents);
+            localStorage.setItem('eClearanceUsers', JSON.stringify(users));
+            
+            // Add sample students to finance data
+            sampleStudents.forEach(student => {
+                if (student.financeVerified) {
+                    financeData.students.push(student);
+                    financeData.totalAmountCollected += student.amountPaid;
+                    financeData.totalAmountOwed += (student.totalFees - student.amountPaid);
+                    
+                    if (student.receiptGenerated) {
+                        financeData.receiptsGenerated.push({
+                            studentId: student.regNumber,
+                            receiptNumber: student.receiptNumber,
+                            date: student.receiptDate,
+                            amountPaid: student.amountPaid
+                        });
+                    }
+                    
+                    // Add student submissions to finance data
+                    if (student.submissions && student.submissions.length > 0) {
+                        student.submissions.forEach(submission => {
+                            financeData.studentSubmissions.push({
+                                ...submission,
+                                studentId: student.regNumber,
+                                studentName: student.name,
+                                college: student.college,
+                                studentEmail: student.email
+                            });
+                        });
+                    }
+                }
+            });
+            localStorage.setItem('financeData', JSON.stringify(financeData));
+        }
+
+        // File validation patterns for detecting faulty files
+        const FILE_VALIDATION_RULES = {
+            maxSize: 5 * 1024 * 1024, // 5MB
+            allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'],
+            minDimensions: { width: 500, height: 300 }, // Minimum dimensions for images
+            blacklistKeywords: ['screenshot', 'edited', 'modified', 'fake', 'template']
+        };
+
+        // Initialize application - ALWAYS START WITH LOGIN PAGE
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clear any existing session to ensure login page shows
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            
+            // Show login page by default
+            showLogin();
+            initializeUploadArea();
+        });
+
+        // Authentication functions
+        function checkAuthStatus() {
+            // This function is not called on page load anymore
+            // We always show login page first
+        }
+
+        function showLogin() {
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('registrationPage').classList.add('hidden');
+            document.getElementById('app').classList.add('hidden');
+            document.getElementById('mainNav').style.display = 'none';
+            document.getElementById('uniHeader').style.display = 'none';
+            
+            // Clear form fields
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function showRegistration() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('registrationPage').classList.remove('hidden');
+            document.getElementById('app').classList.add('hidden');
+            document.getElementById('mainNav').style.display = 'none';
+            document.getElementById('uniHeader').style.display = 'none';
+        }
+
+        function showMainApp() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('registrationPage').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('mainNav').style.display = 'flex';
+            document.getElementById('uniHeader').style.display = 'block';
+            
+            updateUserInterface();
+            if (currentUser.role === 'student') {
+                loadStudentData();
+            } else {
+                updateFinanceDashboard();
+            }
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showMainApp();
+            } else {
+                alert('Invalid email or password. Please try again.');
+            }
+        });
+
+        // Registration form handler
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const student = {
+                name: document.getElementById('regName').value,
+                regNumber: document.getElementById('regNumber').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                college: document.getElementById('regCollege').value,
+                program: document.getElementById('regProgram').value,
+                year: document.getElementById('regYear').value,
+                semester: document.getElementById('regSemester').value,
+                session: document.getElementById('regSession').value,
+                totalFees: parseInt(document.getElementById('regTotalFees').value),
+                amountPaid: parseInt(document.getElementById('regAmountPaid').value),
+                role: 'student',
+                financeVerified: false,
+                clearanceStatus: 'Not Started',
+                receiptGenerated: false,
+                submissions: []
+            };
+
+            // Check if user already exists
+            if (users.find(u => u.email === student.email || u.regNumber === student.regNumber)) {
+                alert('User with this email or registration number already exists.');
+                return;
+            }
+
+            users.push(student);
+            localStorage.setItem('eClearanceUsers', JSON.stringify(users));
+
+            // Add to finance verification
+            financeData.feeVerificationRequests.push({
+                studentId: student.regNumber,
+                studentName: student.name,
+                declaredFees: student.totalFees,
+                college: student.college,
+                status: 'pending',
+                studentEmail: student.email
+            });
+            localStorage.setItem('financeData', JSON.stringify(financeData));
+
+            // Send welcome email without preview
+            sendEmailNotification(
+                student.email,
+                'Welcome to KIU eClearance System',
+                `Dear ${student.name},\n\nWelcome to the Kampala International University eClearance System!\n\nYour account has been created successfully with the following details:\n- Registration Number: ${student.regNumber}\n- College: ${student.college}\n- Program: ${student.program}\n- Total Fees: UGX ${student.totalFees.toLocaleString()}\n- Amount Paid: UGX ${student.amountPaid.toLocaleString()}\n\nYour fee structure is pending verification by the Finance Department. You will receive an email notification once it's verified.\n\nYou can now login to the eClearance system to submit payment evidence and track your clearance status.\n\nBest regards,\nKIU Finance Department\n"Exploring the Heights"`
+            );
+
+            alert('Registration successful! Please login to continue.');
+            showLogin();
+        });
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            showLogin();
+        }
+
+        function updateUserInterface() {
+            const userInfo = document.getElementById('userInfo');
+            const roleToggle = document.getElementById('roleToggle');
+            
+            if (currentUser.role === 'student') {
+                userInfo.textContent = `Student: ${currentUser.name}`;
+                roleToggle.textContent = 'Switch to Finance';
+                document.getElementById('studentView').style.display = 'block';
+                document.getElementById('financeView').style.display = 'none';
+            } else {
+                userInfo.textContent = `Finance Officer: ${currentUser.name}`;
+                roleToggle.textContent = 'Switch to Student';
+                document.getElementById('studentView').style.display = 'none';
+                document.getElementById('financeView').style.display = 'block';
+            }
+        }
+
+        function toggleRole() {
+            if (currentUser.role === 'student' && currentUser.email === 'finance@kiu.ac.ug') {
+                currentUser.role = 'finance';
+            } else if (currentUser.role === 'finance') {
+                currentUser.role = 'student';
+            }
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            updateUserInterface();
+            if (currentUser.role === 'finance') {
+                updateFinanceDashboard();
+            } else {
+                loadStudentData();
+            }
+        }
+
+        // Student data management
+        function loadStudentData() {
+            if (currentUser.role === 'student') {
+                const student = users.find(u => u.email === currentUser.email);
+                if (student) {
+                    studentData = student;
+                    updateStudentDashboard();
+                    updateStudentSubmissions();
+                    updateReceiptDisplay();
+                }
+            }
+        }
+
+        function updateStudentDashboard() {
+            document.getElementById('totalFeesDisplay').textContent = `UGX ${studentData.totalFees?.toLocaleString() || '0'}`;
+            document.getElementById('amountPaid').textContent = `UGX ${studentData.amountPaid?.toLocaleString() || '0'}`;
+            const balance = (studentData.totalFees || 0) - (studentData.amountPaid || 0);
+            document.getElementById('remainingBalance').textContent = `UGX ${balance.toLocaleString()}`;
+            document.getElementById('clearanceStatus').textContent = studentData.clearanceStatus || 'Not Started';
+            document.getElementById('lastSubmission').textContent = studentData.lastSubmission || '-';
+            document.getElementById('studentInfo').textContent = `${studentData.name} (${studentData.regNumber})`;
+            
+            const verifiedBadge = document.getElementById('financeVerified');
+            verifiedBadge.textContent = studentData.financeVerified ? 'Yes' : 'No';
+            verifiedBadge.className = `badge ${studentData.financeVerified ? 'bg-success' : 'bg-danger'}`;
+
+            // Update status badge color
+            const statusBadge = document.getElementById('clearanceStatus');
+            statusBadge.className = 'badge ' + (
+                studentData.clearanceStatus === 'Approved' ? 'bg-success' :
+                studentData.clearanceStatus === 'Pending Review' ? 'bg-warning' :
+                studentData.clearanceStatus === 'Rejected' ? 'bg-danger' : 'bg-secondary'
+            );
+        }
+
+        function updateStudentSubmissions() {
+            const submissionsContainer = document.getElementById('studentSubmissions');
+            
+            if (!studentData.submissions || studentData.submissions.length === 0) {
+                submissionsContainer.innerHTML = '<p class="text-muted">No submissions yet. Submit your first payment evidence above.</p>';
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr>' +
+                '<th>Submission ID</th><th>Date</th><th>Amount</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+
+            studentData.submissions.forEach((submission, index) => {
+                const statusBadge = submission.status === 'Approved' ? 'badge bg-success' :
+                                   submission.status === 'Pending' ? 'badge bg-warning' :
+                                   'badge bg-danger';
+                
+                html += `<tr>
+                    <td>${submission.id || 'N/A'}</td>
+                    <td>${submission.date}</td>
+                    <td>UGX ${submission.amount.toLocaleString()}</td>
+                    <td>${submission.description || 'No description'}</td>
+                    <td><span class="${statusBadge}">${submission.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewSubmissionDetails(${index})">
+                            <i class="fas fa-eye me-1"></i>View
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            submissionsContainer.innerHTML = html;
+        }
+
+        function viewSubmissionDetails(index) {
+            const submission = studentData.submissions[index];
+            alert(`Submission Details:\n\n` +
+                  `ID: ${submission.id}\n` +
+                  `Date: ${submission.date}\n` +
+                  `Amount: UGX ${submission.amount.toLocaleString()}\n` +
+                  `Description: ${submission.description || 'No description'}\n` +
+                  `Status: ${submission.status}\n` +
+                  `File: ${submission.file || 'No file attached'}\n` +
+                  `Risk Level: ${submission.riskLevel || 'Not assessed'}`);
+        }
+
+        // Update receipt display for students
+        function updateReceiptDisplay() {
+            const receiptNotAvailable = document.getElementById('receiptNotAvailable');
+            const receiptContent = document.getElementById('receiptContent');
+            const receiptStatusBadge = document.getElementById('receiptStatusBadge');
+            
+            if (studentData.receiptGenerated && studentData.receiptNumber) {
+                // Show receipt content
+                receiptNotAvailable.style.display = 'none';
+                receiptContent.style.display = 'block';
+                
+                // Update receipt status badge
+                receiptStatusBadge.textContent = 'Available';
+                receiptStatusBadge.className = 'badge bg-success';
+                
+                // Fill receipt details
+                document.getElementById('receiptNumber').textContent = studentData.receiptNumber;
+                document.getElementById('issueDate').textContent = studentData.receiptDate || new Date().toLocaleDateString();
+                document.getElementById('receiptAmountPaid').textContent = `UGX ${studentData.amountPaid.toLocaleString()}`;
+                const balance = studentData.totalFees - studentData.amountPaid;
+                document.getElementById('receiptBalance').textContent = `UGX ${balance.toLocaleString()}`;
+                document.getElementById('receiptTotalFees').textContent = `UGX ${studentData.totalFees.toLocaleString()}`;
+                document.getElementById('receiptRegNumber').textContent = studentData.regNumber;
+                document.getElementById('receiptName').textContent = studentData.name;
+                document.getElementById('receiptCollege').textContent = studentData.college;
+                document.getElementById('receiptProgram').textContent = studentData.program;
+                document.getElementById('receiptYear').textContent = `Year ${studentData.year}`;
+                document.getElementById('receiptSession').textContent = studentData.session;
+                
+                // Simple QR code simulation
+                document.getElementById('qrCode').innerHTML = `
+                    <div style="width: 100px; height: 100px; background: var(--kiu-green); margin: 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 10px;">
+                        <div style="color: white; font-size: 8px; text-align: center;">KIU<br>${studentData.receiptNumber}</div>
+                    </div>
+                `;
+            } else {
+                // Show "no receipt available" message
+                receiptNotAvailable.style.display = 'block';
+                receiptContent.style.display = 'none';
+                
+                // Update receipt status badge
+                if (studentData.clearanceStatus === 'Approved') {
+                    receiptStatusBadge.textContent = 'Pending Generation';
+                    receiptStatusBadge.className = 'badge bg-warning';
+                } else {
+                    receiptStatusBadge.textContent = 'Not Available';
+                    receiptStatusBadge.className = 'badge bg-secondary';
+                }
+            }
+        }
+
+        // Enhanced file upload handling with validation
+        function initializeUploadArea() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            uploadArea.addEventListener('dragover', () => uploadArea.classList.add('dragover'));
+            uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+            uploadArea.addEventListener('drop', (e) => {
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) handleFileSelection(files[0]);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleFileSelection(e.target.files[0]);
+            });
+        }
+
+        function handleFileSelection(file) {
+            const fileInfo = document.getElementById('fileInfo');
+            const submitBtn = document.getElementById('submitBtn');
+            const filePreview = document.getElementById('filePreview');
+            
+            const validationResult = validateFile(file);
+            
+            if (validationResult.isValid) {
+                fileInfo.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        File validated: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)
+                        <br><small>Risk Level: <span class="badge bg-success">Low</span></small>
+                    </div>
+                `;
+                submitBtn.disabled = false;
+                
+                // Show preview for images
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        filePreview.innerHTML = `
+                            <img src="${e.target.result}" class="file-preview" alt="File preview">
+                            <p class="small text-muted mt-2">Preview of uploaded file</p>
+                        `;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    filePreview.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            PDF document uploaded
+                        </div>
+                    `;
+                }
+            } else {
+                fileInfo.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        ${validationResult.errors.join('<br>')}
+                    </div>
+                `;
+                submitBtn.disabled = true;
+                filePreview.innerHTML = '';
+            }
+        }
+
+        function validateFile(file) {
+            const errors = [];
+            let riskLevel = 'low';
+            let issues = [];
+
+            // Check file type
+            if (!FILE_VALIDATION_RULES.allowedTypes.includes(file.type)) {
+                errors.push('Invalid file type. Please upload JPG, PNG, or PDF files only.');
+                riskLevel = 'high';
+                issues.push('Invalid file format');
+            }
+
+            // Check file size
+            if (file.size > FILE_VALIDATION_RULES.maxSize) {
+                errors.push(`File too large. Maximum size is ${(FILE_VALIDATION_RULES.maxSize / 1024 / 1024).toFixed(0)}MB.`);
+                riskLevel = 'medium';
+                issues.push('Oversized file');
+            }
+
+            // Check for suspicious file names
+            FILE_VALIDATION_RULES.blacklistKeywords.forEach(keyword => {
+                if (file.name.toLowerCase().includes(keyword)) {
+                    issues.push(`Suspicious filename: contains "${keyword}"`);
+                    riskLevel = 'high';
+                }
+            });
+
+            // Check if file is too small (might be screenshot of screenshot)
+            if (file.type.startsWith('image/') && file.size < 50000) { // Less than 50KB
+                issues.push('Very small file size - might be low quality');
+                riskLevel = 'medium';
+            }
+
+            return {
+                isValid: errors.length === 0,
+                errors: errors,
+                riskLevel: riskLevel,
+                issues: issues
+            };
+        }
+
+        function submitPayment() {
+            if (!studentData.financeVerified) {
+                alert('Please wait for finance to verify your fee structure before submitting payments.');
+                return;
+            }
+
+            const additionalAmount = parseInt(document.getElementById('additionalAmount').value) || 0;
+            const totalAmountPaid = studentData.amountPaid + additionalAmount;
+            const paymentDescription = document.getElementById('paymentDescription').value || 'No description provided';
+
+            if (additionalAmount > 0) {
+                // Create submission ID
+                const submissionId = 'SUB' + Date.now().toString().slice(-6);
+                
+                studentData.amountPaid = totalAmountPaid;
+                studentData.clearanceStatus = 'Pending Review';
+                studentData.lastSubmission = new Date().toLocaleString();
+                
+                // Add submission to student's history
+                if (!studentData.submissions) {
+                    studentData.submissions = [];
+                }
+                
+                const submission = {
+                    id: submissionId,
+                    date: new Date().toLocaleString(),
+                    amount: additionalAmount,
+                    description: paymentDescription,
+                    status: 'Pending',
+                    file: document.getElementById('fileInput').files[0]?.name || 'No file'
+                };
+                
+                studentData.submissions.push(submission);
+
+                // Update user data
+                const userIndex = users.findIndex(u => u.email === currentUser.email);
+                if (userIndex > -1) {
+                    users[userIndex] = { ...users[userIndex], ...studentData };
+                    localStorage.setItem('eClearanceUsers', JSON.stringify(users));
+                }
+
+                // Validate file and assess risk
+                const fileInput = document.getElementById('fileInput');
+                const file = fileInput.files[0];
+                const validationResult = validateFile(file);
+
+                // Add to finance pending requests with risk assessment
+                const request = {
+                    submissionId: submissionId,
+                    studentId: studentData.regNumber,
+                    studentName: studentData.name,
+                    amountPaid: additionalAmount,
+                    totalAmountPaid: totalAmountPaid,
+                    totalFees: studentData.totalFees,
+                    submissionDate: new Date().toLocaleString(),
+                    description: paymentDescription,
+                    evidence: file.name,
+                    email: studentData.email,
+                    fileRisk: validationResult.riskLevel,
+                    fileIssues: validationResult.issues,
+                    college: studentData.college
+                };
+
+                financeData.pendingRequests.push(request);
+                
+                // Add to student submissions in finance data
+                financeData.studentSubmissions.push({
+                    ...submission,
+                    studentId: studentData.regNumber,
+                    studentName: studentData.name,
+                    college: studentData.college,
+                    studentEmail: studentData.email
+                });
+                
+                // Also add to file assessments for monitoring
+                financeData.fileAssessments.push({
+                    studentId: studentData.regNumber,
+                    studentName: studentData.name,
+                    fileName: file.name,
+                    fileType: file.type,
+                    riskLevel: validationResult.riskLevel,
+                    issues: validationResult.issues,
+                    submissionDate: new Date().toLocaleString(),
+                    submissionId: submissionId
+                });
+
+                localStorage.setItem('financeData', JSON.stringify(financeData));
+                localStorage.setItem('studentData', JSON.stringify(studentData));
+
+                updateStudentDashboard();
+                updateStudentSubmissions();
+                updateReceiptDisplay();
+
+                // Send submission confirmation email
+                sendEmailNotification(
+                    studentData.email,
+                    'Payment Evidence Submitted - KIU eClearance',
+                    `Dear ${studentData.name},\n\nYour payment evidence has been submitted successfully!\n\nSubmission Details:\n- Submission ID: ${submissionId}\n- Amount: UGX ${additionalAmount.toLocaleString()}\n- Description: ${paymentDescription}\n- Submission Date: ${new Date().toLocaleString()}\n- Total Amount Paid: UGX ${totalAmountPaid.toLocaleString()}\n- Remaining Balance: UGX ${(studentData.totalFees - totalAmountPaid).toLocaleString()}\n\nYour submission is now pending review by the Finance Department. You will receive another email once your payment is verified.\n\nThank you,\nKIU Finance Department\n"Exploring the Heights"`
+                );
+
+                document.getElementById('fileInfo').innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Payment evidence submitted successfully! Waiting for finance approval.
+                        <br><small>Submission ID: ${submissionId}</small>
+                        <br><strong>You will receive an email confirmation shortly.</strong>
+                    </div>
+                `;
+                document.getElementById('submitBtn').disabled = true;
+                document.getElementById('additionalAmount').value = '';
+                document.getElementById('paymentDescription').value = '';
+                document.getElementById('filePreview').innerHTML = '';
+            } else {
+                alert('Please enter a valid additional payment amount.');
+            }
+        }
+
+        // Enhanced Finance functions
+        function updateFinanceDashboard() {
+            // Calculate financial metrics
+            let totalAmountCollected = 0;
+            let totalAmountOwed = 0;
+            let totalReceipts = financeData.receiptsGenerated.length;
+            let receiptsToday = financeData.receiptsGenerated.filter(r => {
+                const today = new Date().toLocaleDateString();
+                return new Date(r.date).toLocaleDateString() === today;
+            }).length;
+            
+            financeData.students.forEach(student => {
+                totalAmountCollected += student.amountPaid;
+                totalAmountOwed += (student.totalFees - student.amountPaid);
+            });
+            
+            const collectionRate = financeData.students.length > 0 ? 
+                ((totalAmountCollected / (totalAmountCollected + totalAmountOwed)) * 100).toFixed(1) : 0;
+            const avgPaymentPerStudent = financeData.students.length > 0 ? 
+                Math.round(totalAmountCollected / financeData.students.length) : 0;
+            
+            // Update dashboard metrics
+            document.getElementById('pendingCount').textContent = financeData.pendingRequests.length;
+            document.getElementById('approvedCount').textContent = financeData.approvedRequests.length;
+            document.getElementById('totalStudents').textContent = financeData.students.length;
+            document.getElementById('revenue').textContent = `UGX ${financeData.totalRevenue.toLocaleString()}`;
+            
+            // Update revenue details
+            document.getElementById('totalAmountCollected').textContent = `UGX ${totalAmountCollected.toLocaleString()}`;
+            document.getElementById('totalAmountOwed').textContent = `UGX ${totalAmountOwed.toLocaleString()}`;
+            document.getElementById('collectionRate').textContent = `${collectionRate}%`;
+            document.getElementById('avgPaymentPerStudent').textContent = `UGX ${avgPaymentPerStudent.toLocaleString()}`;
+            
+            // Update receipt management
+            document.getElementById('totalReceipts').textContent = totalReceipts;
+            document.getElementById('receiptsToday').textContent = receiptsToday;
+            document.getElementById('pendingReceipts').textContent = financeData.students.filter(s => 
+                s.clearanceStatus === 'Approved' && !s.receiptGenerated).length;
+
+            // Update Student Submissions Table
+            const studentSubmissionsTable = document.getElementById('studentSubmissionsTable');
+            studentSubmissionsTable.innerHTML = '';
+            financeData.studentSubmissions.slice().reverse().forEach((submission, index) => {
+                const statusBadge = submission.status === 'Approved' ? 'badge bg-success' :
+                                   submission.status === 'Pending' ? 'badge bg-warning' :
+                                   'badge bg-danger';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${submission.studentId}</td>
+                    <td>${submission.studentName}</td>
+                    <td>${submission.college}</td>
+                    <td>UGX ${submission.amount.toLocaleString()}</td>
+                    <td>${submission.description || 'No description'}</td>
+                    <td>${submission.file || 'No file'}</td>
+                    <td>${submission.date}</td>
+                    <td><span class="${statusBadge}">${submission.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewStudentSubmission('${submission.studentId}', '${submission.id}')">
+                            <i class="fas fa-eye me-1"></i>Details
+                        </button>
+                        ${submission.status === 'Pending' ? `
+                        <button class="btn btn-sm btn-success mt-1" onclick="approveSubmission('${submission.studentId}', '${submission.id}')">
+                            <i class="fas fa-check me-1"></i>Approve
+                        </button>
+                        <button class="btn btn-sm btn-danger mt-1" onclick="rejectSubmission('${submission.studentId}', '${submission.id}')">
+                            <i class="fas fa-times me-1"></i>Reject
+                        </button>
+                        ` : ''}
+                    </td>
+                `;
+                studentSubmissionsTable.appendChild(row);
+            });
+
+            // Update Students Summary Table
+            const studentsSummaryTable = document.getElementById('studentsSummaryTable');
+            studentsSummaryTable.innerHTML = '';
+            financeData.students.forEach(student => {
+                const balance = student.totalFees - student.amountPaid;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${student.regNumber}</td>
+                    <td>${student.name}</td>
+                    <td>${student.college}</td>
+                    <td>UGX ${student.amountPaid.toLocaleString()}</td>
+                    <td>UGX ${student.totalFees.toLocaleString()}</td>
+                    <td class="${balance > 0 ? 'text-danger' : 'text-success'}">
+                        UGX ${balance.toLocaleString()}
+                    </td>
+                    <td>
+                        ${student.receiptGenerated ? 
+                            `<span class="badge bg-success">Generated</span><br>
+                             <small>${student.receiptNumber || 'N/A'}</small>` : 
+                            `<span class="badge bg-warning">Pending</span>`
+                        }
+                    </td>
+                    <td>
+                        ${student.clearanceStatus === 'Approved' && !student.receiptGenerated ? 
+                            `<button class="btn btn-sm btn-kiu" onclick="generateReceiptForStudent('${student.regNumber}')">
+                                <i class="fas fa-receipt me-1"></i>Generate Receipt
+                            </button>` :
+                            student.receiptGenerated ?
+                            `<button class="btn btn-sm btn-outline-kiu" onclick="viewReceipt('${student.regNumber}')">
+                                <i class="fas fa-eye me-1"></i>View
+                            </button>` :
+                            `<span class="text-muted">Not Approved</span>`
+                        }
+                    </td>
+                `;
+                studentsSummaryTable.appendChild(row);
+            });
+
+            // Update Risk Assessment Table
+            const riskAssessmentTable = document.getElementById('riskAssessmentTable');
+            riskAssessmentTable.innerHTML = '';
+            financeData.fileAssessments.forEach((assessment, index) => {
+                const row = document.createElement('tr');
+                row.className = `risk-${assessment.riskLevel}`;
+                row.innerHTML = `
+                    <td>${assessment.studentName}<br><small>${assessment.studentId}</small></td>
+                    <td>${assessment.fileType.split('/')[1]?.toUpperCase() || 'PDF'}</td>
+                    <td>
+                        <span class="badge ${
+                            assessment.riskLevel === 'high' ? 'bg-danger' :
+                            assessment.riskLevel === 'medium' ? 'bg-warning' : 'bg-success'
+                        }">
+                            ${assessment.riskLevel.toUpperCase()}
+                        </span>
+                    </td>
+                    <td>
+                        ${assessment.issues.length > 0 ? 
+                          assessment.issues.join(', ') : 'No issues detected'}
+                    </td>
+                    <td>${assessment.submissionDate}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewDetailedAssessment(${index})">
+                            <i class="fas fa-search me-1"></i>Details
+                        </button>
+                    </td>
+                `;
+                riskAssessmentTable.appendChild(row);
+            });
+
+            // Update fee verification table
+            const feeVerificationTable = document.getElementById('feeVerificationTable');
+            feeVerificationTable.innerHTML = '';
+            financeData.feeVerificationRequests.forEach((request, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${request.studentId}</td>
+                    <td>${request.studentName}</td>
+                    <td>UGX ${request.declaredFees.toLocaleString()}</td>
+                    <td>${request.college}</td>
+                    <td><span class="badge bg-warning">Pending</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-success me-1" onclick="verifyFees(${index}, true)">
+                            <i class="fas fa-check me-1"></i>Approve
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="verifyFees(${index}, false)">
+                            <i class="fas fa-times me-1"></i>Reject
+                        </button>
+                    </td>
+                `;
+                feeVerificationTable.appendChild(row);
+            });
+
+            // Update pending requests table with risk indicators
+            const pendingRequestsTable = document.getElementById('pendingRequests');
+            pendingRequestsTable.innerHTML = '';
+            financeData.pendingRequests.forEach((request, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${request.studentId}</td>
+                    <td>${request.studentName}</td>
+                    <td>UGX ${request.amountPaid.toLocaleString()}</td>
+                    <td>UGX ${request.totalFees.toLocaleString()}</td>
+                    <td>${request.submissionDate}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewEvidence(${index})">
+                            <i class="fas fa-eye me-1"></i>View
+                        </button>
+                    </td>
+                    <td>
+                        <span class="badge ${
+                            request.fileRisk === 'high' ? 'bg-danger' :
+                            request.fileRisk === 'medium' ? 'bg-warning' : 'bg-success'
+                        }">
+                            ${request.fileRisk.toUpperCase()}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success me-1" onclick="approveRequest(${index})">
+                            <i class="fas fa-check me-1"></i>Approve
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="rejectRequest(${index})">
+                            <i class="fas fa-times me-1"></i>Reject
+                        </button>
+                        ${request.fileRisk !== 'low' ? `
+                        <button class="btn btn-sm btn-warning mt-1" onclick="flagForReview(${index})">
+                            <i class="fas fa-flag me-1"></i>Flag
+                        </button>
+                        ` : ''}
+                    </td>
+                `;
+                pendingRequestsTable.appendChild(row);
+            });
+        }
+
+        function viewStudentSubmission(studentId, submissionId) {
+            const submission = financeData.studentSubmissions.find(s => 
+                s.studentId === studentId && s.id === submissionId);
+            
+            if (submission) {
+                alert(`Student Submission Details:\n\n` +
+                      `Student: ${submission.studentName} (${submission.studentId})\n` +
+                      `College: ${submission.college}\n` +
+                      `Submission ID: ${submission.id}\n` +
+                      `Date: ${submission.date}\n` +
+                      `Amount: UGX ${submission.amount.toLocaleString()}\n` +
+                      `Description: ${submission.description || 'No description'}\n` +
+                      `Status: ${submission.status}\n` +
+                      `File: ${submission.file || 'No file'}\n` +
+                      `Student Email: ${submission.studentEmail}`);
+            }
+        }
+
+        function approveSubmission(studentId, submissionId) {
+            const submissionIndex = financeData.studentSubmissions.findIndex(s => 
+                s.studentId === studentId && s.id === submissionId);
+            
+            if (submissionIndex !== -1) {
+                const submission = financeData.studentSubmissions[submissionIndex];
+                submission.status = 'Approved';
+                
+                // Update in pending requests
+                const pendingIndex = financeData.pendingRequests.findIndex(p => 
+                    p.studentId === studentId && p.submissionId === submissionId);
+                
+                if (pendingIndex !== -1) {
+                    const request = financeData.pendingRequests[pendingIndex];
+                    financeData.approvedRequests.push(request);
+                    financeData.pendingRequests.splice(pendingIndex, 1);
+                    financeData.totalRevenue += request.amountPaid;
+                    financeData.totalAmountCollected += request.amountPaid;
+                }
+                
+                // Update student data
+                const studentIndex = users.findIndex(u => u.regNumber === studentId);
+                if (studentIndex > -1) {
+                    const student = users[studentIndex];
+                    student.amountPaid += submission.amount;
+                    student.clearanceStatus = 'Approved';
+                    
+                    // Update student's submission
+                    if (student.submissions) {
+                        const studentSubmissionIndex = student.submissions.findIndex(s => s.id === submissionId);
+                        if (studentSubmissionIndex !== -1) {
+                            student.submissions[studentSubmissionIndex].status = 'Approved';
+                        }
+                    }
+                    
+                    localStorage.setItem('eClearanceUsers', JSON.stringify(users));
+                    
+                    // Send approval email
+                    sendEmailNotification(
+                        student.email,
+                        'Payment Approved - KIU eClearance',
+                        `Dear ${student.name},\n\nYour payment submission has been approved by the Finance Department!\n\nSubmission Details:\n- Submission ID: ${submissionId}\n- Amount Approved: UGX ${submission.amount.toLocaleString()}\n- Description: ${submission.description || 'No description'}\n- Approval Date: ${new Date().toLocaleString()}\n\nYour clearance status is now: APPROVED\nTotal Amount Paid: UGX ${student.amountPaid.toLocaleString()}\nRemaining Balance: UGX ${(student.totalFees - student.amountPaid).toLocaleString()}\n\nYou can now request your clearance receipt from the Finance Department.\n\nCongratulations!\nKIU Finance Department\n"Exploring the Heights"`
+                    );
+                }
+                
+                localStorage.setItem('financeData', JSON.stringify(financeData));
+                updateFinanceDashboard();
+                
+                alert(`Submission from ${submission.studentName} approved successfully! Email notification sent.`);
+            }
+        }
+
+        function rejectSubmission(studentId, submissionId) {
+            const submissionIndex = financeData.studentSubmissions.findIndex(s => 
+                s.studentId === studentId && s.id === submissionId);
+            
+            if (submissionIndex !== -1) {
+                const submission = financeData.studentSubmissions[submissionIndex];
+                submission.status = 'Rejected';
+                
+                // Remove from pending requests
+                const pendingIndex = financeData.pendingRequests.findIndex(p => 
+                    p.studentId === studentId && p.submissionId === submissionId);
+                
+                if (pendingIndex !== -1) {
+                    financeData.pendingRequests.splice(pendingIndex, 1);
+                }
+                
+                // Update student data
+                const studentIndex = users.findIndex(u => u.regNumber === studentId);
+                if (studentIndex > -1) {
+                    const student = users[studentIndex];
+                    
+                    // Update student's submission
+                    if (student.submissions) {
+                        const studentSubmissionIndex = student.submissions.findIndex(s => s.id === submissionId);
+                        if (studentSubmissionIndex !== -1) {
+                            student.submissions[studentSubmissionIndex].status = 'Rejected';
+                        }
+                    }
+                    
+                    localStorage.setItem('eClearanceUsers', JSON.stringify(users));
+                    
+                    // Send rejection email
+                    sendEmailNotification(
+                        student.email,
+                        'Payment Rejected - KIU eClearance',
+                        `Dear ${student.name},\n\nYour payment submission has been rejected by the Finance Department.\n\nSubmission Details:\n- Submission ID: ${submissionId}\n- Amount: UGX ${submission.amount.toLocaleString()}\n- Description: ${submission.description || 'No description'}\n- Submission Date: ${submission.date}\n\nReason for Rejection:\nThe payment evidence provided could not be verified. Please ensure you upload clear, original bank slips or payment confirmations.\n\nPlease review your submission and contact the Finance Department if you have questions.\nEmail: ${EMAIL_CONFIG.universityEmail}\nPhone: ${EMAIL_CONFIG.phone}\n\nThank you,\nKIU Finance Department\n"Exploring the Heights"`
+                    );
+                }
+                
+                localStorage.setItem('financeData', JSON.stringify(financeData));
+                updateFinanceDashboard();
+                
+                alert(`Submission from ${submission.studentName} rejected. Email notification sent.`);
+            }
+        }
+
+        // Finance can generate receipt for student
+        function generateReceiptForStudent(studentRegNumber) {
+            const studentIndex = financeData.students.findIndex(s => s.regNumber === studentRegNumber);
+            if (studentIndex === -1) {
+                alert('Student not found!');
+                return;
+            }
+
+            const student = financeData.students[studentIndex];
+            
+            // Generate receipt number
+            const receiptNumber = 'KIU-RCP-' + Date.now();
+            const receiptDate = new Date().toLocaleDateString();
+            
+            // Update student data
+            student.receiptGenerated = true;
+            student.receiptNumber = receiptNumber;
+            student.receiptDate = receiptDate;
+            student.clearanceStatus = 'Cleared';
+            
+            // Update in main users array
+            const userIndex = users.findIndex(u => u.regNumber === studentRegNumber);
+            if (userIndex > -1) {
+                users[userIndex] = { ...users[userIndex], ...student };
+            }
+            
+            // Add to receipts generated
+            financeData.receiptsGenerated.push({
+                studentId: studentRegNumber,
+                receiptNumber: receiptNumber,
+                date: receiptDate,
+                amountPaid: student.amountPaid,
+                studentName: student.name
+            });
+            
+            // Update local storage
+            localStorage.setItem('eClearanceUsers', JSON.stringify(users));
+            localStorage.setItem('financeData', JSON.stringify(financeData));
+            
+            // Send receipt notification email
+            sendEmailNotification(
+                student.email,
+                'Clearance Receipt Generated - KIU',
+                `Dear ${student.name},\n\nYour clearance receipt has been generated by the Finance Department.\n\nReceipt Details:\n- Receipt Number: ${receiptNumber}\n- Date Generated: ${receiptDate}\n- Total Amount Paid: UGX ${student.amountPaid.toLocaleString()}\n- Remaining Balance: UGX ${(student.totalFees - student.amountPaid).toLocaleString()}\n- Clearance Status: CLEARED\n\nYou can now download your receipt from the eClearance portal or collect a physical copy from the Finance Department.\n\nCongratulations on completing your tuition clearance!\n\nBest regards,\nKIU Finance Department\n"Exploring the Heights"`
+            );
+            
+            alert(`Receipt generated for ${student.name}!\nReceipt Number: ${receiptNumber}\nEmail notification sent.`);
+            updateFinanceDashboard();
+        }
+
+        function viewReceipt(studentRegNumber) {
+            const student = financeData.students.find(s => s.regNumber === studentRegNumber);
+            if (student && student.receiptGenerated) {
+                alert(`Viewing receipt for ${student.name}:\n\n` +
+                      `Receipt Number: ${student.receiptNumber}\n` +
+                      `Date: ${student.receiptDate}\n` +
+                      `Amount Paid: UGX ${student.amountPaid.toLocaleString()}\n` +
+                      `Student ID: ${student.regNumber}\n` +
+                      `Program: ${student.program}\n` +
+                      `College: ${student.college}`);
+            } else {
+                alert('Receipt not found for this student.');
+            }
+        }
+
+        function generateAllReceipts() {
+            const pendingReceipts = financeData.students.filter(s => 
+                s.clearanceStatus === 'Approved' && !s.receiptGenerated);
+            
+            if (pendingReceipts.length === 0) {
+                alert('No pending receipts to generate.');
+                return;
+            }
+            
+            if (confirm(`Generate receipts for ${pendingReceipts.length} approved students? This will send email notifications to all students.`)) {
+                pendingReceipts.forEach(student => {
+                    generateReceiptForStudent(student.regNumber);
+                });
+                alert(`Generated ${pendingReceipts.length} receipts successfully! Email notifications sent to all students.`);
+                updateFinanceDashboard();
+            }
+        }
+
+        function viewDetailedAssessment(index) {
+            const assessment = financeData.fileAssessments[index];
+            alert(`Detailed File Assessment for ${assessment.studentName}:\n\n` +
+                  `File: ${assessment.fileName}\n` +
+                  `Type: ${assessment.fileType}\n` +
+                  `Risk Level: ${assessment.riskLevel.toUpperCase()}\n` +
+                  `Issues: ${assessment.issues.join(', ') || 'None'}\n` +
+                  `Submission Date: ${assessment.submissionDate}\n` +
+                  `Submission ID: ${assessment.submissionId}`);
+        }
+
+        function flagForReview(index) {
+            const request = financeData.pendingRequests[index];
+            alert(`Payment from ${request.studentName} has been flagged for manual review.\n\n` +
+                  `Reason: File quality or authenticity concerns detected.\n` +
+                  `Action: Finance team will contact student for additional verification.\n\n` +
+                  `An email has been sent to the student requesting additional documentation.`);
+            
+            // Send email to student requesting additional documentation
+            sendEmailNotification(
+                request.email,
+                'Additional Documentation Required - KIU eClearance',
+                `Dear ${request.studentName},\n\nYour payment submission requires additional verification.\n\nSubmission Details:\n- Submission ID: ${request.submissionId}\n- Amount: UGX ${request.amountPaid.toLocaleString()}\n- Submission Date: ${request.submissionDate}\n\nAction Required:\nPlease provide additional documentation for your payment. This could include:\n1. Original bank slip with bank stamp\n2. Mobile money transaction details with reference number\n3. Bank statement showing the transaction\n\nPlease submit these documents to the Finance Department office or upload them through the eClearance system.\n\nFor assistance, contact:\nEmail: ${EMAIL_CONFIG.universityEmail}\nPhone: ${EMAIL_CONFIG.phone}\n\nThank you,\nKIU Finance Department\n"Exploring the Heights"`
+            );
+        }
+
+        function verifyFees(index, approved) {
+            const request = financeData.feeVerificationRequests[index];
+            
+            if (approved) {
+                // Update student's finance verified status
+                const studentIndex = users.findIndex(u => u.regNumber === request.studentId);
+                if (studentIndex > -1) {
+                    users[studentIndex].financeVerified = true;
+                    users[studentIndex].clearanceStatus = 'Fee Verified';
+                    
+                    // Add to finance students list
+                    if (!financeData.students.find(s => s.regNumber === request.studentId)) {
+                        financeData.students.push(users[studentIndex]);
+                        financeData.totalAmountCollected += users[studentIndex].amountPaid;
+                        financeData.totalAmountOwed += (users[studentIndex].totalFees - users[studentIndex].amountPaid);
+                    }
+                    
+                    localStorage.setItem('eClearanceUsers', JSON.stringify(users));
+                    
+                    // Send verification approval email
+                    sendEmailNotification(
+                        request.studentEmail,
+                        'Fee Structure Verified - KIU eClearance',
+                        `Dear ${request.studentName},\n\nYour fee structure has been verified by the KIU Finance Department.\n\nFee Structure Details:\n- Total Fees: UGX ${request.declaredFees.toLocaleString()}\n- Amount Paid: UGX ${users[studentIndex].amountPaid.toLocaleString()}\n- Remaining Balance: UGX ${(request.declaredFees - users[studentIndex].amountPaid).toLocaleString()}\n- College: ${request.college}\n\nYou can now submit payment evidence through the eClearance system to complete your clearance.\n\nNext Steps:\n1. Login to the eClearance system\n2. Upload clear payment evidence\n3. Submit for verification\n\nIf you have any questions, contact the Finance Department.\n\nThank you,\nKIU Finance Department\n"Exploring the Heights"`
+                    );
+                }
+            } else {
+                // Send rejection email
+                sendEmailNotification(
+                    request.studentEmail,
+                    'Fee Structure Verification Rejected - KIU eClearance',
+                    `Dear ${request.studentName},\n\nYour fee structure verification has been rejected.\n\nDeclared Fees: UGX ${request.declaredFees.toLocaleString()}\nCollege: ${request.college}\n\nReason for Rejection:\nThe declared fee structure does not match our records. Please visit the Finance Department office with your original fee structure document for verification.\n\nOffice Hours: Monday-Friday, 8:00 AM - 5:00 PM\nLocation: Finance Department, Main Administration Building\nContact: ${EMAIL_CONFIG.phone}\n\nThank you,\nKIU Finance Department\n"Exploring the Heights"`
+                );
+            }
+            
+            financeData.feeVerificationRequests.splice(index, 1);
+            localStorage.setItem('financeData', JSON.stringify(financeData));
+            updateFinanceDashboard();
+            
+            alert(`Fee structure ${approved ? 'approved' : 'rejected'} for ${request.studentName}. Email notification sent.`);
+        }
+
+        function approveRequest(index) {
+            const request = financeData.pendingRequests[index];
+            
+            // Move to approved
+            financeData.approvedRequests.push(request);
+            financeData.pendingRequests.splice(index, 1);
+            financeData.totalRevenue += request.amountPaid;
+            financeData.totalAmountCollected += request.amountPaid;
+
+            // Update student status
+            const studentIndex = users.findIndex(u => u.regNumber === request.studentId);
+            if (studentIndex > -1) {
+                users[studentIndex].clearanceStatus = 'Approved';
+                users[studentIndex].amountPaid = request.totalAmountPaid;
+                
+                // Update student submission
+                if (users[studentIndex].submissions) {
+                    const submissionIndex = users[studentIndex].submissions.findIndex(s => 
+                        s.amount === request.amountPaid && s.date === request.submissionDate);
+                    if (submissionIndex !== -1) {
+                        users[studentIndex].submissions[submissionIndex].status = 'Approved';
+                    }
+                }
+                
+                // Update in finance students list
+                const financeStudentIndex = financeData.students.findIndex(s => s.regNumber === request.studentId);
+                if (financeStudentIndex > -1) {
+                    financeData.students[financeStudentIndex].amountPaid = request.totalAmountPaid;
+                    financeData.students[financeStudentIndex].clearanceStatus = 'Approved';
+                }
+                
+                // Update in student submissions
+                const submissionIndex = financeData.studentSubmissions.findIndex(s => 
+                    s.studentId === request.studentId && s.amount === request.amountPaid);
+                if (submissionIndex !== -1) {
+                    financeData.studentSubmissions[submissionIndex].status = 'Approved';
+                }
+                
+                localStorage.setItem('eClearanceUsers', JSON.stringify(users));
+                
+                // Send approval email
+                sendEmailNotification(
+                    request.email,
+                    'Payment Approved - KIU Clearance',
+                    `Dear ${request.studentName},\n\nYour payment has been approved by the KIU Finance Department!\n\nPayment Details:\n- Amount Approved: UGX ${request.amountPaid.toLocaleString()}\n- Total Amount Paid: UGX ${request.totalAmountPaid.toLocaleString()}\n- Remaining Balance: UGX ${(request.totalFees - request.totalAmountPaid).toLocaleString()}\n- Approval Date: ${new Date().toLocaleString()}\n- Reference: ${request.description || 'No reference'}\n\nYour clearance status is now: APPROVED\n\nNext Steps:\nYou can now request your clearance receipt from the Finance Department or wait for it to be generated automatically.\n\nCongratulations!\nKampala International University\n"Exploring the Heights"`
+                );
+            }
+
+            localStorage.setItem('financeData', JSON.stringify(financeData));
+            updateFinanceDashboard();
+
+            alert(`Payment from ${request.studentName} approved successfully! Email notification sent.`);
+        }
+
+        function rejectRequest(index) {
+            const request = financeData.pendingRequests[index];
+            financeData.pendingRequests.splice(index, 1);
+            
+            // Update student status
+            const studentIndex = users.findIndex(u => u.regNumber === request.studentId);
+            if (studentIndex > -1) {
+                users[studentIndex].clearanceStatus = 'Rejected';
+                
+                // Update student submission
+                if (users[studentIndex].submissions) {
+                    const submissionIndex = users[studentIndex].submissions.findIndex(s => 
+                        s.amount === request.amountPaid && s.date === request.submissionDate);
+                    if (submissionIndex !== -1) {
+                        users[studentIndex].submissions[submissionIndex].status = 'Rejected';
+                    }
+                }
+                
+                // Update in student submissions
+                const submissionIndex = financeData.studentSubmissions.findIndex(s => 
+                    s.studentId === request.studentId && s.amount === request.amountPaid);
+                if (submissionIndex !== -1) {
+                    financeData.studentSubmissions[submissionIndex].status = 'Rejected';
+                }
+                
+                localStorage.setItem('eClearanceUsers', JSON.stringify(users));
+                
+                // Send rejection email with reason
+                const reason = request.fileRisk !== 'low' ? 
+                    'The payment evidence provided could not be verified. Please ensure you upload clear, original bank slips or payment confirmations.' :
+                    'Payment evidence could not be verified. Please contact finance office for clarification.';
+                
+                sendEmailNotification(
+                    request.email,
+                    'Payment Rejected - KIU eClearance',
+                    `Dear ${request.studentName},\n\nYour payment submission has been rejected.\n\nSubmission Details:\n- Amount: UGX ${request.amountPaid.toLocaleString()}\n- Submission Date: ${request.submissionDate}\n- Reference: ${request.description || 'No reference'}\n\nReason for Rejection:\n${reason}\n\nPlease review your submission and:\n1. Ensure you upload clear, original documents\n2. Verify the payment details are correct\n3. Contact the Finance Department if you have questions\n\nFor assistance:\nEmail: ${EMAIL_CONFIG.universityEmail}\nPhone: ${EMAIL_CONFIG.phone}\nOffice: Finance Department, Main Administration Building\n\nThank you,\nKIU Finance Department\n"Exploring the Heights"`
+                );
+            }
+
+            localStorage.setItem('financeData', JSON.stringify(financeData));
+            updateFinanceDashboard();
+
+            alert(`Payment from ${request.studentName} has been rejected. Email notification sent.`);
+        }
+
+        function viewEvidence(index) {
+            const request = financeData.pendingRequests[index];
+            alert(`Viewing evidence for: ${request.studentName}\n\n` +
+                  `Submission ID: ${request.submissionId}\n` +
+                  `File: ${request.evidence}\n` +
+                  `Risk Level: ${request.fileRisk.toUpperCase()}\n` +
+                  `Issues: ${request.fileIssues.join(', ') || 'None'}\n` +
+                  `Description: ${request.description || 'No description'}\n` +
+                  `Amount: UGX ${request.amountPaid.toLocaleString()}\n` +
+                  `Student Email: ${request.email}\n\n` +
+                  `This would open the uploaded file in a new window for detailed inspection.`);
+        }
+
+        // Email modal functions
+        function openEmailModal() {
+            document.getElementById('emailPreviewModal').style.display = 'flex';
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailPreviewModal').style.display = 'none';
+        }
+
+        // Enhanced email notification function
+        function sendEmailNotification(to, subject, body, showPreview = false) {
+            currentEmailData = { to, subject, body };
+            
+            if (showPreview) {
+                // Show email preview
+                const emailPreview = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <div style="background: var(--kiu-green); color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0;">
+                            <h2 style="margin: 0; font-size: 24px;">KAMPALA INTERNATIONAL UNIVERSITY</h2>
+                            <p style="margin: 5px 0 0 0; font-style: italic;">"Exploring the Heights"</p>
+                        </div>
+                        <div style="padding: 20px; background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 5px 5px;">
+                            <p><strong>To:</strong> ${to}</p>
+                            <p><strong>Subject:</strong> ${subject}</p>
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                            <div style="white-space: pre-line; line-height: 1.6; font-size: 14px;">
+                                ${body}
+                            </div>
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                            <div style="font-size: 12px; color: #666; text-align: center;">
+                                <p>This is an automated email from the KIU eClearance System.</p>
+                                <p>Kampala International University | Ggaba Road, Kansanga, Kampala, Uganda</p>
+                                <p>Email: ${EMAIL_CONFIG.universityEmail} | Phone: ${EMAIL_CONFIG.phone} | Website: ${EMAIL_CONFIG.website}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('emailPreviewContent').innerHTML = emailPreview;
+                openEmailModal();
+            } else {
+                // Direct send without preview
+                sendActualEmail();
+            }
+        }
+
+        function sendActualEmail() {
+            if (!currentEmailData) return;
+            
+            const { to, subject, body } = currentEmailData;
+            
+            // In a real application, this would connect to an email service
+            // For demonstration, we'll show a success message and log to console
+            
+            console.log('KIU Email Sent:', {
+                to: to,
+                subject: subject,
+                body: body,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Show success message
+            alert(`✅ Email sent successfully to: ${to}\n\nSubject: ${subject}\n\nThe student will receive this notification in their email inbox.`);
+            
+            // Close modal
+            closeEmailModal();
+        }
+
+        // Receipt functions for students
+        function downloadReceipt() {
+            if (!studentData.receiptGenerated) {
+                alert('No receipt available yet. Please wait for finance to generate your receipt.');
+                return;
+            }
+            
+            // Create receipt content
+            const receiptContent = `
+                KAMPALA INTERNATIONAL UNIVERSITY
+                Official Tuition Receipt
+                "Exploring the Heights"
+                
+                Receipt Number: ${studentData.receiptNumber}
+                Date Issued: ${studentData.receiptDate || new Date().toLocaleDateString()}
+                
+                Student Information:
+                --------------------
+                Student ID: ${studentData.regNumber}
+                Student Name: ${studentData.name}
+                College: ${studentData.college}
+                Program: ${studentData.program}
+                Academic Year: Year ${studentData.year}
+                Session: ${studentData.session}
+                
+                Financial Details:
+                -----------------
+                Total Fees: UGX ${studentData.totalFees.toLocaleString()}
+                Amount Paid: UGX ${studentData.amountPaid.toLocaleString()}
+                Remaining Balance: UGX ${(studentData.totalFees - studentData.amountPaid).toLocaleString()}
+                
+                Status: ${studentData.clearanceStatus}
+                Generated by: Finance Department, KIU
+                
+                Ggaba Road, Kansanga, Kampala, Uganda
+                Email: finance@kiu.ac.ug | Phone: +256-414-267-671
+                
+                --- END OF RECEIPT ---
+            `;
+            
+            // Create downloadable file
+            const blob = new Blob([receiptContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `KIU_Receipt_${studentData.receiptNumber}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('KIU Receipt downloaded successfully!');
+            
+            // Log the download
+            console.log('KIU Receipt Downloaded:', {
+                student: studentData.name,
+                receiptNumber: studentData.receiptNumber,
+                amount: studentData.amountPaid,
+                date: new Date().toISOString()
+            });
+        }
+
+        function sendReceiptEmail() {
+            if (!studentData.receiptGenerated) {
+                alert('No receipt available to send.');
+                return;
+            }
+            
+            sendEmailNotification(
+                studentData.email,
+                'Your KIU Clearance Receipt',
+                `Dear ${studentData.name},\n\nAttached is your official clearance receipt from Kampala International University.\n\nReceipt Details:\n- Receipt Number: ${studentData.receiptNumber}\n- Date: ${studentData.receiptDate || new Date().toLocaleDateString()}\n- Amount Paid: UGX ${studentData.amountPaid.toLocaleString()}\n- Remaining Balance: UGX ${(studentData.totalFees - studentData.amountPaid).toLocaleString()}\n- Clearance Status: ${studentData.clearanceStatus}\n\nYou can also download the receipt from your eClearance portal.\n\nThank you for choosing KIU!\n\nBest regards,\nFinance Department\nKampala International University\n"Exploring the Heights"`,
+                true
+            );
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('emailPreviewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEmailModal();
+            }
+        });
+    </script>
+</body>
+</html>
